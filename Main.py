@@ -1,8 +1,16 @@
 # model.py
 import torch
+import pandas as pd
 from torch import nn
 
 from symptom_diagnosis_model import model, test_loader, scaler, label_encoder
+
+# Load your dataset
+data = pd.read_csv("./dataset.csv")  # Replace with your file path
+
+#list of diseases paired with their indices for test evaluation
+y = data['Disease']
+
 
 # Define a global variable to store form data from user input
 global_form_data = {}
@@ -42,7 +50,7 @@ print(f'Test Accuracy: {test_accuracy:.2f}%')
 # we probably need to let the user select symptoms from a list since if a user types them in
 # it won't encode to the same value for now we can just make a dummy
 
-new_symptoms = [[1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+new_symptoms = [[0, 0, 1, 1, 1, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 ]]  # Example data; replace with actual symptoms
 
 # Preprocess and convert to tensor
@@ -54,6 +62,12 @@ model.eval()
 with torch.no_grad():
     output = model(new_symptoms_tensor)
     _, predicted_class = torch.max(output, 1)
-    predicted_disease = label_encoder.inverse_transform([predicted_class.item()])
+    predicted_classes = predicted_class.tolist()  # Convert tensor to a list
+    predicted_diseases = label_encoder.inverse_transform(predicted_classes)  # Inverse transform
 
-print(f"Predicted Disease: {predicted_disease[0]}")
+# Print predicted diseases
+# in the data CSV there are multiple entries for some illnesses Ex: any answer returned as 0-9 would represent "Fungal infection"
+for disease in predicted_diseases:
+    print(f"Predicted Disease: {disease}")
+    print(f"tensor item: {y[disease]}")
+
