@@ -52,16 +52,17 @@ const SymptomsForm = () => {
   };
 
   return (
-    <div>
-      <h1>Select Symptoms</h1>
-      <div>
+    <div style={styles.container}>
+      <h1 style={styles.heading}>Select Symptoms</h1>
+
+      <div style={styles.symptomsContainer}>
         {symptoms.map((symptom) => (
           <button
             key={symptom}
             onClick={() => handleSymptomClick(symptom)}
             style={{
-              backgroundColor: selectedSymptoms.includes(symptom) ? 'lightblue' : 'lightgray',
-              margin: '5px',
+              ...styles.symptomButton,
+              backgroundColor: selectedSymptoms.includes(symptom) ? '#6baed6' : '#e6f2ff',
             }}
           >
             {symptom}
@@ -69,30 +70,108 @@ const SymptomsForm = () => {
         ))}
       </div>
 
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label>Name:</label>
+      <form onSubmit={handleSubmit} style={styles.form}>
+        <div style={styles.inputGroup}>
+          <label style={styles.label}>Name:</label>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
+            style={styles.input}
           />
         </div>
 
-        <div>
-          <label>Upload File:</label>
+        <div style={styles.inputGroup}>
+          <label style={styles.label}>Upload File:</label>
           <input
             type="file"
             onChange={(e) => setFile(e.target.files[0])}
             required
+            style={styles.input}
           />
         </div>
 
-        <button type="submit">Submit</button>
+        <button type="submit" style={styles.submitButton}>Submit</button>
       </form>
     </div>
   );
+};
+
+// Styling
+// Styling
+const styles = {
+  container: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    background: 'linear-gradient(to bottom, #cce6ff, white)',
+    minHeight: '100vh',
+    padding: '20px',
+  },
+  heading: {
+    color: '#005b96',
+    marginBottom: '20px',
+    fontSize: '2em',
+  },
+  symptomsContainer: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    marginBottom: '20px',
+  },
+  symptomButton: {
+    padding: '10px 15px',
+    margin: '5px',
+    borderRadius: '5px',
+    border: 'none',
+    cursor: 'pointer',
+    color: '#005b96',
+    fontSize: '1em',
+    transition: 'background-color 0.3s',
+  },
+  form: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center', // Center the form contents horizontally
+    width: '100%',
+    maxWidth: '400px',
+    backgroundColor: '#e6f2ff',
+    padding: '20px',
+    borderRadius: '10px',
+    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+  },
+  inputGroup: {
+    display: 'flex',
+    flexDirection: 'column', // Align label and input vertically
+    alignItems: 'center',    // Center-align each input group horizontally
+    width: '100%',
+    marginBottom: '15px',
+  },
+  label: {
+    display: 'block',
+    marginBottom: '5px',
+    color: '#005b96',
+    fontSize: '1em',
+  },
+  input: {
+    width: '100%',            // Full width within the form
+    padding: '10px',
+    borderRadius: '5px',
+    border: '1px solid #b3d1ff',
+    boxSizing: 'border-box',  // Ensures padding doesn't extend input beyond container width
+    margin: '20px'
+  },
+  submitButton: {
+    padding: '10px 20px',
+    backgroundColor: '#005b96',
+    color: 'white',
+    border: 'none',
+    borderRadius: '5px',
+    cursor: 'pointer',
+    fontSize: '1em',
+    transition: 'background-color 0.3s',
+  },
 };
 
 export default SymptomsForm;

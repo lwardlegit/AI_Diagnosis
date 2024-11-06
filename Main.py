@@ -6,13 +6,8 @@ from symptom_diagnosis_model import model, test_loader, scaler, label_encoder
 
 # Load your dataset
 data = pd.read_csv("./dataset.csv")  # Replace with your file path
-
 #list of diseases paired with their indices for test evaluation
 y = data['Disease']
-
-
-# Define a global variable to store form data from user input
-global_form_data = {}
 
 def load_model():
     model = torch.load('./symptom_diagnosis_model.pth')
@@ -45,27 +40,27 @@ print(f'Test Accuracy: {test_accuracy:.2f}%')
 # test the model against new data
 
 #### Example input: Replace with actual symptom values as a list
-# we probably need to let the user select symptoms from a list since if a user types them in
-# it won't encode to the same value for now we can just make a dummy
 
-new_symptoms = [[0, 0, 1, 1, 1, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-]]  # Example data; replace with actual symptoms
+def eval_with_inputs(name,new_symptoms,file):
+    # we need a separate torch model to detect anything from scans then we can run it in this method
+    new_symptoms = scaler.transform(new_symptoms)
+    new_symptoms_tensor = torch.tensor(new_symptoms, dtype=torch.float32)
 
-# Preprocess and convert to tensor
-new_symptoms = scaler.transform(new_symptoms)
-new_symptoms_tensor = torch.tensor(new_symptoms, dtype=torch.float32)
+    print("BEGINNING TEST WITH SAMPLE DATA...")
+    model.eval()
+    with torch.no_grad():
+        output = model(new_symptoms_tensor)
+        _, predicted_class = torch.max(output, 1)
+        predicted_classes = predicted_class.tolist()  # Convert tensor to a list
+        predicted_diseases = label_encoder.inverse_transform(predicted_classes)  # Inverse transform
 
-print("BEGINNING TEST WITH SAMPLE DATA...")
-model.eval()
-with torch.no_grad():
-    output = model(new_symptoms_tensor)
-    _, predicted_class = torch.max(output, 1)
-    predicted_classes = predicted_class.tolist()  # Convert tensor to a list
-    predicted_diseases = label_encoder.inverse_transform(predicted_classes)  # Inverse transform
+    #  run scan detection model here
 
-# Print predicted diseases
-# in the data CSV there are multiple entries for some illnesses Ex: any answer returned as 0-9 would represent "Fungal infection"
-for disease in predicted_diseases:
-    print(f"Predicted Disease: {disease}")
-    print(f"tensor item: {y[disease]}")
+
+    # Print predicted diseases
+    # in the data CSV there are multiple entries for some illnesses Ex: any answer returned as 0-9 would represent "Fungal infection"
+    for disease in predicted_diseases:
+        print(f"name: {name}")
+        print(f"Predicted Disease: {disease}")
+        print(f"tensor item: {y[disease]}")
 

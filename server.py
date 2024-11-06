@@ -2,6 +2,8 @@ import json
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from Main import eval_with_inputs
+import csv
 
 app = Flask(__name__)
 CORS(app)  # This will enable CORS for all routes
@@ -9,8 +11,21 @@ CORS(app)  # This will enable CORS for all routes
 
 @app.route('/symptoms', methods=['GET'])
 def get_symptoms():
-    symptoms = ["Cough", "Fever", "Headache", "Sore Throat"]
-    return jsonify(symptoms)
+    unique_symptoms = set()  # Use a set to automatically handle duplicates
+
+    with open('./dataset.csv', 'r') as file:
+        reader = csv.reader(file)
+        next(reader)  # Skip the header row
+
+        for row in reader:
+            # Extract symptoms starting from column 2 (index 1) onward
+            symptoms = row[1:]
+            # Filter out empty values and add symptoms to the set
+            unique_symptoms.update([symptom.strip() for symptom in symptoms if symptom.strip()])
+    print(unique_symptoms)
+    unique_symptoms = jsonify(list(unique_symptoms))
+    print(unique_symptoms)
+    return unique_symptoms
 
 
 @app.route('/submit', methods=['POST'])
@@ -19,12 +34,11 @@ def submit_form():
     symptoms = request.form.get('symptoms')
     file = request.files.get('file')
 
-    symptoms = json.loads(symptoms)  # If needed
-
     print("Name:", name)
     print("Symptoms:", symptoms)
     print("File:", file.filename if file else "No file")
-    return jsonify({"status": "success", "message": "Form received!"})
+    result = eval_with_inputs(name, symptoms, file)
+    return jsonify(result)
 
 
 if __name__ == '__main__':
