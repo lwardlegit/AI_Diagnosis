@@ -1,4 +1,3 @@
-# model.py
 import torch
 import pandas as pd
 from torch import nn
@@ -41,7 +40,6 @@ print(f'Test Accuracy: {test_accuracy:.2f}%')
 
 # we can save it if we need to improve accuracy per run
 # torch.save(model.state_dict(), "symptom_diagnosis_model.pth")
-# print("Model saved.")
 
 
 # test the model against new data
