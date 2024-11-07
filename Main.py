@@ -1,13 +1,18 @@
 import torch
 import pandas as pd
 from torch import nn
-
+from bloodwork_diagnosis_model import bloodworkmodel
 from symptom_diagnosis_model import model, test_loader, scaler, label_encoder
 
-# Load your dataset
-data = pd.read_csv("./dataset.csv")  # Replace with your file path
-#list of diseases paired with their indices for test evaluation
+# Load Symptoms dataset
+data = pd.read_csv("./dataset.csv")
 y = data['Disease']
+
+# Load bloodwork dataset
+data = pd.read_csv("./blood_sample_data.csv")
+y2 = data['Illness']
+
+# Load scans dataset
 
 def load_model():
     model = torch.load('./symptom_diagnosis_model.pth')
@@ -33,18 +38,14 @@ def evaluate_model(model, data_loader):
 test_accuracy = evaluate_model(model, test_loader)
 print(f'Test Accuracy: {test_accuracy:.2f}%')
 
-# we can save it if we need to improve accuracy per run
-# torch.save(model.state_dict(), "symptom_diagnosis_model.pth")
 
+# test the model against user input
 
-# test the model against new data
-
-#### Example input: Replace with actual symptom values as a list
-
-def eval_with_inputs(name,new_symptoms,file):
-    # we need a separate torch model to detect anything from scans then we can run it in this method
+def eval_with_inputs(name,new_symptoms,scan,bloodwork):
     new_symptoms = scaler.transform(new_symptoms)
     new_symptoms_tensor = torch.tensor(new_symptoms, dtype=torch.float32)
+
+    new_bloodwork_tensor = torch.tensor(bloodwork, dtype=torch.float32)
 
     print("BEGINNING TEST WITH SAMPLE DATA...")
     model.eval()
@@ -54,9 +55,6 @@ def eval_with_inputs(name,new_symptoms,file):
         predicted_classes = predicted_class.tolist()  # Convert tensor to a list
         predicted_diseases = label_encoder.inverse_transform(predicted_classes)  # Inverse transform
 
-    #  run scan detection model here
-
-
     # Print predicted diseases
     # in the data CSV there are multiple entries for some illnesses Ex: any answer returned as 0-9 would represent "Fungal infection"
     for disease in predicted_diseases:
@@ -64,3 +62,21 @@ def eval_with_inputs(name,new_symptoms,file):
         print(f"Predicted Disease: {disease}")
         print(f"tensor item: {y[disease]}")
 
+
+    bloodworkmodel.eval()
+    with torch.no_grad():
+        output = bloodworkmodel(new_bloodwork_tensor)
+        _, predicted_class = torch.max(output, 1)
+        predicted_classes = predicted_class.tolist()  # Convert tensor to a list
+        predicted_illness = label_encoder.inverse_transform(predicted_classes)  # Inverse transform
+
+
+    for illness in predicted_illness:
+        print(f"name: {name}")
+        print(f"Predicted Illness by bloodwork: {illness}")
+        print(f"tensor item: {y2[illness]}")
+
+
+    #scan model will evaluate here
+
+    #if we have all 3 answers we need to create a new CSV with correct answers from all 3 categories

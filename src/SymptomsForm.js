@@ -6,6 +6,7 @@ const SymptomsForm = () => {
   const [selectedSymptoms, setSelectedSymptoms] = useState([]);
   const [name, setName] = useState('');
   const [file, setFile] = useState(null);
+  const [bloodwork, setBloodwork] = useState(null);
 
   // Fetch symptoms from the server
   useEffect(() => {
@@ -37,6 +38,7 @@ const SymptomsForm = () => {
     const formData = new FormData();
     formData.append('name', name);
     formData.append('file', file);
+    formData.append('bloodwork', bloodwork);
     formData.append('symptoms', JSON.stringify(selectedSymptoms));
 
     try {
@@ -74,21 +76,31 @@ const SymptomsForm = () => {
         <div style={styles.inputGroup}>
           <label style={styles.label}>Name:</label>
           <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-            style={styles.input}
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+              style={styles.input}
           />
         </div>
 
         <div style={styles.inputGroup}>
           <label style={styles.label}>Upload File:</label>
           <input
-            type="file"
-            onChange={(e) => setFile(e.target.files[0])}
-            required
-            style={styles.input}
+              type="file"
+              onChange={(e) => setFile(e.target.files[0])}
+              required
+              style={styles.input}
+          />
+        </div>
+
+        <div style={styles.inputGroup}>
+          <label style={styles.label}>Upload Bloodwork:</label>
+          <input
+              type="file"
+              onChange={(e) => setFile(e.target.files[0])}
+              required
+              style={styles.input}
           />
         </div>
 

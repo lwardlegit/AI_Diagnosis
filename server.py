@@ -32,12 +32,14 @@ def get_symptoms():
 def submit_form():
     name = request.form.get('name')
     symptoms = request.form.get('symptoms')
-    file = request.files.get('file')
+    scan = request.files.get('file')
+    bloodwork = request.files.get('bloodwork')
 
     print("Name:", name)
     print("Symptoms:", symptoms)
-    print("File:", file.filename if file else "No file")
-    result = eval_with_inputs(name, symptoms, file)
+    print("Scan:", scan.filename if scan else "No file")
+    print("Bloodwork:", bloodwork.filename if scan else "No file")
+    result = eval_with_inputs(name, symptoms, scan, bloodwork)
     return jsonify(result)
 
 
