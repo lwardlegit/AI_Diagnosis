@@ -5,10 +5,9 @@ const SymptomsForm = () => {
   const [symptoms, setSymptoms] = useState([]);
   const [selectedSymptoms, setSelectedSymptoms] = useState([]);
   const [name, setName] = useState('');
-  const [file, setFile] = useState(null);
-  const [bloodwork, setBloodwork] = useState(null);
+  const [scanFile, setScanFile] = useState(null);
+  const [bloodworkFile, setBloodworkFile] = useState(null);
 
-  // Fetch symptoms from the server
   useEffect(() => {
     const fetchSymptoms = async () => {
       try {
@@ -21,7 +20,6 @@ const SymptomsForm = () => {
     fetchSymptoms();
   }, []);
 
-  // Handle symptom selection
   const handleSymptomClick = (symptom) => {
     setSelectedSymptoms((prevSelected) => {
       if (prevSelected.includes(symptom)) {
@@ -32,13 +30,12 @@ const SymptomsForm = () => {
     });
   };
 
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     const formData = new FormData();
     formData.append('name', name);
-    formData.append('file', file);
-    formData.append('bloodwork', bloodwork);
+    formData.append('file', scanFile);
+    formData.append('bloodwork', bloodworkFile);
     formData.append('symptoms', JSON.stringify(selectedSymptoms));
 
     try {
@@ -76,31 +73,31 @@ const SymptomsForm = () => {
         <div style={styles.inputGroup}>
           <label style={styles.label}>Name:</label>
           <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              style={styles.input}
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+            style={styles.input}
           />
         </div>
 
         <div style={styles.inputGroup}>
-          <label style={styles.label}>Upload File:</label>
+          <label style={styles.label}>Upload Scan:</label>
           <input
-              type="file"
-              onChange={(e) => setFile(e.target.files[0])}
-              required
-              style={styles.input}
+            type="file"
+            onChange={(e) => setScanFile(e.target.files[0])}
+            required
+            style={styles.input}
           />
         </div>
 
         <div style={styles.inputGroup}>
           <label style={styles.label}>Upload Bloodwork:</label>
           <input
-              type="file"
-              onChange={(e) => setFile(e.target.files[0])}
-              required
-              style={styles.input}
+            type="file"
+            onChange={(e) => setBloodworkFile(e.target.files[0])}
+            required
+            style={styles.input}
           />
         </div>
 
@@ -110,7 +107,6 @@ const SymptomsForm = () => {
   );
 };
 
-// Styling
 // Styling
 const styles = {
   container: {
@@ -145,7 +141,7 @@ const styles = {
   form: {
     display: 'flex',
     flexDirection: 'column',
-    alignItems: 'center', // Center the form contents horizontally
+    alignItems: 'center',
     width: '100%',
     maxWidth: '400px',
     backgroundColor: '#e6f2ff',
@@ -155,8 +151,8 @@ const styles = {
   },
   inputGroup: {
     display: 'flex',
-    flexDirection: 'column', // Align label and input vertically
-    alignItems: 'center',    // Center-align each input group horizontally
+    flexDirection: 'column',
+    alignItems: 'center',
     width: '100%',
     marginBottom: '15px',
   },
@@ -167,12 +163,12 @@ const styles = {
     fontSize: '1em',
   },
   input: {
-    width: '100%',            // Full width within the form
+    width: '100%',
     padding: '10px',
     borderRadius: '5px',
     border: '1px solid #b3d1ff',
-    boxSizing: 'border-box',  // Ensures padding doesn't extend input beyond container width
-    margin: '20px'
+    boxSizing: 'border-box',
+    margin: '20px',
   },
   submitButton: {
     padding: '10px 20px',

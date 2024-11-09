@@ -31,7 +31,6 @@ scaler = StandardScaler()
 X_train = scaler.fit_transform(X_train)
 X_test = scaler.transform(X_test)
 
-# I think all this is doing is converting the data into torch tensors
 class SymptomDataset(Dataset):
     def __init__(self, features, labels):
         self.features = torch.tensor(features, dtype=torch.float32)
