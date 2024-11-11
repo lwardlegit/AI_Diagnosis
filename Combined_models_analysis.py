@@ -1,34 +1,15 @@
 import torch
 import pandas as pd
+import re
 from torch import nn
-from bloodwork_diagnosis_model import bloodworkmodel
-from symptom_diagnosis_model import model, test_loader, scaler, label_encoder
-from torchvision import transforms
+from torchvision.models import ResNet50_Weights
+
+from bloodwork_diagnosis_model import bloodworkmodel, BloodworkModel
+from model_helper_functions import get_bloodwork_model, get_symptom_model
+from symptom_diagnosis_model import model, test_loader, scaler, label_encoder, SymptomModel, symptom_index_map
+from torchvision import transforms, models
 from PIL import Image
 import numpy as np
-
-# Ensure `new_symptoms` is a list of strings representing symptom names.
-def align_symptom_input(user_symptoms, symptom_index_map):
-    # Create a zero array with the same length as the number of features in the training data
-    aligned_input = np.zeros(len(symptom_index_map))
-
-    # Set the corresponding index to 1 for each symptom in the user's input
-    for symptom in user_symptoms:
-        if symptom in symptom_index_map:
-            index = symptom_index_map[symptom]
-            aligned_input[index] = 1
-        else:
-            print(f"Warning: Symptom '{symptom}' not found in training data features.")
-
-    return aligned_input
-
-# Load models as before
-def load_models():
-    symptoms_model = torch.load('./symptom_diagnosis_model.pth')
-    bloodwork_model = torch.load('./bloodwork_diagnosis_model.pth')
-    scans_model = torch.load('./scan_classification_model.pth')
-    print("Models loaded.")
-    return symptoms_model, bloodwork_model, scans_model
 
 # Function to evaluate a model's accuracy
 def evaluate_model(model, data_loader):
@@ -45,8 +26,24 @@ def evaluate_model(model, data_loader):
     accuracy = 100 * correct / total
     return accuracy
 
+
+def read_csv_with_multiple_encodings(file_path):
+    encodings = ["utf-8", "ISO-8859-1", "latin1", "utf-16", "utf-8-sig"]
+    for encoding in encodings:
+        try:
+            df = pd.read_csv(file_path, encoding=encoding)
+            print(f"Successfully read the file with encoding: {encoding}")
+            return df  # Return the DataFrame if successful
+        except UnicodeDecodeError:
+            print(f"Failed to read with encoding: {encoding}")
+
+    raise ValueError("None of the encodings were successful in reading the file.")
+
 # Single-image evaluation function for scan model
-def evaluate_single_image(model, image_path):
+def evaluate_single_image(image_path):
+    model = models.resnet50(weights=ResNet50_Weights.IMAGENET1K_V1)
+    model.load_state_dict(torch.load("scan_classification_model.pth"))
+    model.eval()
     transform = transforms.Compose([
         transforms.Resize((224, 224)),
         transforms.ToTensor(),
@@ -69,59 +66,46 @@ def evaluate_single_image(model, image_path):
     predicted_labels = (probabilities > 0.5).squeeze().cpu().numpy()
     return predicted_labels
 
+def predict_disease(symptom_strings, symptom_index_map, model, scaler, label_encoder):
+    # Create an aligned input vector for the symptoms
+    input_vector = np.zeros(len(symptom_index_map))
+    for symptom in symptom_strings:
+        if symptom in symptom_index_map:
+            index = symptom_index_map[symptom]
+            input_vector[index] = 1  # Mark the presence of the symptom
+
+    # Scale the input
+    input_vector = scaler.transform([input_vector])  # Scaling expects a 2D array
+
+    # Convert to tensor for model input
+    input_tensor = torch.tensor(input_vector, dtype=torch.float32)
+
+    # Make the prediction
+    with torch.no_grad():
+        output = model(input_tensor)
+        _, predicted_class = torch.max(output, 1)
+
+    # Convert numeric prediction back to disease name
+    predicted_disease = label_encoder.inverse_transform(predicted_class.numpy())
+
+    return predicted_disease[0]
+
 # Main function to evaluate all inputs
 def eval_with_inputs(name, new_symptoms, bloodwork, scan):
-    symptoms_model, bloodwork_model, scans_model = load_models()
+    #symptoms we can have - new symptoms length so our input size is correct
+    row = 17 - len(new_symptoms)
+    while len(new_symptoms) < row:
+        new_symptoms.append(None)
+    print(new_symptoms)
 
-    # Prepare the symptoms dataset
-    symptoms_data = pd.read_csv("./dataset.csv")
-    X = symptoms_data.drop(
-        columns=['Symptom_1', 'Symptom_2', 'Symptom_3', 'Symptom_4', 'Symptom_5', 'Symptom_6', 'Symptom_7', 'Symptom_8',
-                 'Symptom_9'])
-    X = pd.get_dummies(X)  # One-hot encoding
 
-    # Create a mapping of symptom names to their indices in the one-hot encoded DataFrame
-    symptom_index_map = {symptom: idx for idx, symptom in enumerate(X.columns)}
-
-    # Check and align the symptom input
-    print("Symptom indices mapping:", symptom_index_map)
-    aligned_input = align_symptom_input(new_symptoms, symptom_index_map)
-    print("Aligned symptom input:", aligned_input)
-
-    # Scale and convert to tensor
-    aligned_input_scaled = scaler.transform([aligned_input])  # Transform expects a 2D array
-    new_symptoms_tensor = torch.tensor(aligned_input_scaled, dtype=torch.float32)
-
-    # Prepare bloodwork tensor
-    new_bloodwork_tensor = torch.tensor(bloodwork, dtype=torch.float32)
-
-    # Begin testing with sample data
-    symptoms_model.eval()
-    with torch.no_grad():
-        output = symptoms_model(new_symptoms_tensor)
-        _, predicted_class = torch.max(output, 1)
-        predicted_classes = predicted_class.tolist()
-        predicted_diseases_by_symptoms = label_encoder.inverse_transform(predicted_classes)
-
-    for disease in predicted_diseases_by_symptoms:
-        print(f"Name: {name}")
-        print(f"Predicted Disease: {disease}")
-
-    # Evaluate bloodwork model
-    bloodwork_model.eval()
-    with torch.no_grad():
-        output = bloodwork_model(new_bloodwork_tensor)
-        _, predicted_class = torch.max(output, 1)
-        predicted_classes = predicted_class.tolist()
-        predicted_illness_by_bloodwork = label_encoder.inverse_transform(predicted_classes)
-
-    for illness in predicted_illness_by_bloodwork:
-        print(f"Name: {name}")
-        print(f"Predicted Illness by Bloodwork: {illness}")
+    predicted_disease = predict_disease(new_symptoms, symptom_index_map, model, scaler, label_encoder)
+    print("Name: ", name,"\n")
+    print("Predicted Disease:", predicted_disease)
 
     # Evaluate scan model
-    scan_prediction = evaluate_single_image(scans_model, scan)
-
-    print("Predictions from symptoms:", predicted_diseases_by_symptoms)
-    print("Predictions from bloodwork:", predicted_illness_by_bloodwork)
+    scan_prediction = evaluate_single_image(scan)
     print("Predictions for the test image:", scan_prediction)
+
+
+

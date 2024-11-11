@@ -8,6 +8,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import LabelEncoder
 
+from model_helper_functions import get_symptom_model
 
 # Load your dataset
 data = pd.read_csv("./dataset.csv")  # Replace with your file path
@@ -65,11 +66,7 @@ class SymptomModel(nn.Module):
         x = self.fc3(x)
         return x
 
-# Hyperparameters
-input_size = X_train.shape[1]
-hidden_size = 64
-num_classes = len(np.unique(y))
-model = SymptomModel(input_size, hidden_size, num_classes)
+model,scaler_symptoms = get_symptom_model()
 
 
 criterion = nn.CrossEntropyLoss()
@@ -99,5 +96,21 @@ for epoch in range(num_epochs):
 
     torch.save(model.state_dict(), "symptom_diagnosis_model.pth")
     print("Model saved as 'symptom_diagnosis_model.pth'")
+
+
+model = SymptomModel(input_size=X_train.shape[1], hidden_size=64, num_classes=len(label_encoder.classes_))
+model.load_state_dict(torch.load("symptom_diagnosis_model.pth"))
+model.eval()
+
+# Load scaler
+scaler = StandardScaler()
+scaler.fit(X_train)  # Reuse training scaler
+
+# Load or define your symptom_index_map
+symptom_index_map = {symptom: idx for idx, symptom in enumerate(X.columns)}  # from X.columns or manually
+
+# Assume label_encoder is pre-fit from training
+label_encoder = LabelEncoder()
+label_encoder.fit(data['Disease'])  # Replace with actual target column used during training
 
 

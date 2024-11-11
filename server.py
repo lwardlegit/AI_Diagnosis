@@ -8,6 +8,9 @@ import csv
 app = Flask(__name__)
 CORS(app)  # This will enable CORS for all routes
 
+@app.route('/home', methods=['GET'])
+def get_home():
+    return {}
 
 @app.route('/symptoms', methods=['GET'])
 def get_symptoms():
@@ -39,7 +42,7 @@ def submit_form():
     print("Symptoms:", symptoms)
     print("Scan:", scan.filename if scan else "No file")
     print("Bloodwork:", bloodwork.filename if scan else "No file")
-    result = eval_with_inputs(name, symptoms, scan, bloodwork)
+    result = eval_with_inputs(name, symptoms, bloodwork, scan)
     return jsonify(result)
 
 
