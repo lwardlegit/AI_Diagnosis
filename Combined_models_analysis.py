@@ -4,7 +4,7 @@ import re
 from torch import nn
 from torchvision.models import ResNet50_Weights
 
-from bloodwork_diagnosis_model import bloodworkmodel, BloodworkModel
+from bloodwork_diagnosis_model import bloodworkmodel, BloodworkModel, predict_illness_bloodwork
 from model_helper_functions import get_bloodwork_model, get_symptom_model
 from symptom_diagnosis_model import model, test_loader, scaler, label_encoder, SymptomModel, symptom_index_map
 from torchvision import transforms, models
@@ -66,6 +66,7 @@ def evaluate_single_image(image_path):
     predicted_labels = (probabilities > 0.5).squeeze().cpu().numpy()
     return predicted_labels
 
+
 def predict_disease(symptom_strings, symptom_index_map, model, scaler, label_encoder):
     # Create an aligned input vector for the symptoms
     input_vector = np.zeros(len(symptom_index_map))
@@ -99,9 +100,14 @@ def eval_with_inputs(name, new_symptoms, bloodwork, scan):
     print(new_symptoms)
 
 
+    # Evaluate symptom model
     predicted_disease = predict_disease(new_symptoms, symptom_index_map, model, scaler, label_encoder)
     print("Name: ", name,"\n")
     print("Predicted Disease:", predicted_disease)
+
+    #Evaluate bloodwork model
+    predicted_illness = predict_illness_bloodwork(bloodwork)
+    print("Predicted Disease:", predicted_illness)
 
     # Evaluate scan model
     scan_prediction = evaluate_single_image(scan)
